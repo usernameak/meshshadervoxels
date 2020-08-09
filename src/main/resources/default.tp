@@ -1,0 +1,61 @@
+#version 460
+
+#extension GL_NV_mesh_shader : require
+#extension GL_NV_shader_thread_group : require
+#extension GL_NV_gpu_shader5 : require
+
+layout(local_size_x = 6) in;
+
+layout(std430, binding = 0) buffer inputBlockData {
+    uint block_types[16 * 16 * 16];
+};
+
+// faces:
+// 0 = DOWN
+// 1 = UP
+// 2 = NORTH
+// 3 = SOUTH
+// 4 = WEST
+// 5 = EAST
+
+const int faceBlockArrayOffsets[] = {-16, 16, -256, 256, -1, 1};
+const ivec3 faceBlockArrayDirections[] = {
+    ivec3(0, -1, 0),
+    ivec3(0, 1, 0),
+    ivec3(0, 0, -1),
+    ivec3(0, 0, 1),
+    ivec3(-1, 0, 0),
+    ivec3(1, 0, 0)
+};
+
+taskNV out Task {
+    uint      block_position;
+    uint8_t   faceIds[6];
+} OUT;
+
+bool checkCullFace(int position, uint face) {
+    int offset = faceBlockArrayOffsets[face];
+    int x = position % 16;
+    int y = (position / 16) % 16;
+    int z = position / 256;
+    ivec3 vpos = ivec3(x, y, z);
+    ivec3 adjPos = vpos + faceBlockArrayDirections[face];
+    if(any(lessThan(adjPos, ivec3(0))) || any(greaterThanEqual(adjPos, ivec3(16)))) {
+        return true;
+    }
+    return block_types[offset + position] == 0;
+}
+
+void main() {
+    int position = int(gl_WorkGroupID.x);
+    uint block_type = block_types[position];
+    bool isFaceVisible = block_type != 0 && checkCullFace(position, gl_LocalInvocationID.x);
+    uint vote = ballotThreadNV(isFaceVisible);
+    uint faceCount = bitCount(vote);
+    gl_TaskCountNV = faceCount;
+    OUT.block_position = position;
+    uint idxOffset = bitCount(vote & gl_ThreadLtMaskNV);
+    if (isFaceVisible) {
+        OUT.faceIds[idxOffset] = uint8_t(gl_LocalInvocationID.x);
+    }
+}
