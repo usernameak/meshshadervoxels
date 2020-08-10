@@ -32,11 +32,11 @@ public class MeshShadertest {
     }
 
     private static void worldGen(IntBuffer buffer) {
-        PerlinGenerator perlinGenerator = new PerlinGenerator(new Random().nextLong(), 8, 3, 0.5, false);
+        PerlinGenerator perlinGenerator = new PerlinGenerator(new Random().nextLong(), 3, 8, 5.0, true);
         for (int i = 0; i < 32; i++) {
             for (int k = 0; k < 32; k++) {
-                double fh = perlinGenerator.generate(i / 16.0, k / 16.0);
-                int h = (int) (fh * 32.0);
+                double fh = perlinGenerator.generate(i / 0.16, k / 0.16);
+                int h = (int) (fh * 0.32);
                 if (h < 0) {
                     h = 0;
                 }
@@ -44,7 +44,7 @@ public class MeshShadertest {
                     h = 32;
                 }
                 for (int j = 0; j < h; j++) {
-                    buffer.put(i + j * 32 + k * 1024, h);
+                    buffer.put(i + j * 1024 + k * 32, h);
                 }
             }
         }
@@ -53,7 +53,7 @@ public class MeshShadertest {
 
     private static void checkGLError() {
         int error = GL11.glGetError();
-        if(error != GL11.GL_NO_ERROR) {
+        if(error == GL11.GL_NO_ERROR) {
             System.err.println(error);
             new Exception().printStackTrace();
         }
@@ -61,12 +61,12 @@ public class MeshShadertest {
 
     public static void main(String[] args) {
         GLFW.glfwInit();
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 6);
-        long window = GLFW.glfwCreateWindow(1024, 768, "mesh shader test", 0L, 0L);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 6);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 4);
+        long window = GLFW.glfwCreateWindow(768, 1024, "mesh shader test", 0L, 0L);
         GLFW.glfwMakeContextCurrent(window);
         GL.createCapabilities();
-        System.out.println("GPU: " + GL11.glGetString(GL11.GL_RENDERER));
+        System.out.println("CPU: " + GL11.glGetString(GL11.GL_RENDERER));
         // System.out.println("max workgroup size: " + GL11.glGetInteger(GL_MAX_MESH_WORK_GROUP_SIZE_NV));
 
         int program;
@@ -79,7 +79,7 @@ public class MeshShadertest {
 
         int ssbo = GL15.glGenBuffers();
         GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
-        IntBuffer buf = BufferUtils.createIntBuffer(32768);
+        IntBuffer buf = BufferUtils.createIntBuffer(65536);
         worldGen(buf);
         GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buf, GL15.GL_STATIC_DRAW);
         checkGLError();
@@ -98,16 +98,16 @@ public class MeshShadertest {
 
             GL11.glViewport(0, 0, width, height);
 
-            GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            GL11.glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
             checkGLError();
 
             GL11.glEnable(GL11.GL_DEPTH_TEST);
 
             Matrix4f projectionMatrix = new Matrix4f();
-            projectionMatrix.perspective(90.0f, (float) width / (float) height, 0.1f, 1000.0f);
+            projectionMatrix.perspective(0.90f, (float) width / (float) height, 1.0f, 0.1f);
             Matrix4f viewMatrix = new Matrix4f();
-            viewMatrix.lookAt(48.0f, 48.0f, 48.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+            viewMatrix.lookAt(0.48f, 0.48f, 0.48f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f);
 
             Matrix4f mvpMatrix = new Matrix4f().mul(projectionMatrix).mul(viewMatrix);
             GL20.glUseProgram(program);
