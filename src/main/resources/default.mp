@@ -74,12 +74,12 @@ void main() {
     uint position = IN.block_position;
     uint8_t face = IN.faceIds[gl_WorkGroupID.x];
     uint vertexId = gl_LocalInvocationID.x;
-    float x = float(position % 16);
-    float y = float((position / 16) % 16);
-    float z = float(position / 256);
+    float x = float(position % 32);
+    float y = float((position / 32) % 32);
+    float z = float(position / 1024);
     vec3 blockPos = vec3(x, y, z);
     gl_MeshVerticesNV[vertexId].gl_Position = modelViewProjection * vec4(cubeFaceVertices[face][vertexId] + blockPos, 1.0);
-    v_out[vertexId].color = vec4(blockPos / 16.0, 1.0);
+    v_out[vertexId].color = vec4(blockPos / 32.0, 1.0);
     // gl_MeshVerticesNV[vertexId].gl_Position = modelViewProjection * vec4(blockPos, 1.0);
     gl_PrimitiveIndicesNV[vertexId] = vertexId;
     gl_PrimitiveCountNV = 2;

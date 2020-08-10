@@ -33,18 +33,18 @@ public class MeshShadertest {
 
     private static void worldGen(IntBuffer buffer) {
         PerlinGenerator perlinGenerator = new PerlinGenerator(new Random().nextLong(), 8, 3, 0.5, false);
-        for (int i = 0; i < 16; i++) {
-            for (int k = 0; k < 16; k++) {
+        for (int i = 0; i < 32; i++) {
+            for (int k = 0; k < 32; k++) {
                 double fh = perlinGenerator.generate(i / 16.0, k / 16.0);
-                int h = (int) (fh * 16.0);
+                int h = (int) (fh * 32.0);
                 if (h < 0) {
                     h = 0;
                 }
-                if (h >= 16) {
-                    h = 15;
+                if (h >= 32) {
+                    h = 32;
                 }
                 for (int j = 0; j < h; j++) {
-                    buffer.put(i + j * 16 + k * 256, h);
+                    buffer.put(i + j * 32 + k * 1024, h);
                 }
             }
         }
@@ -79,7 +79,7 @@ public class MeshShadertest {
 
         int ssbo = GL15.glGenBuffers();
         GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, ssbo);
-        IntBuffer buf = BufferUtils.createIntBuffer(4096);
+        IntBuffer buf = BufferUtils.createIntBuffer(32768);
         worldGen(buf);
         GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buf, GL15.GL_STATIC_DRAW);
         checkGLError();
@@ -107,7 +107,7 @@ public class MeshShadertest {
             Matrix4f projectionMatrix = new Matrix4f();
             projectionMatrix.perspective(90.0f, (float) width / (float) height, 0.1f, 1000.0f);
             Matrix4f viewMatrix = new Matrix4f();
-            viewMatrix.lookAt(24.0f, 24.0f, 24.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+            viewMatrix.lookAt(48.0f, 48.0f, 48.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
             Matrix4f mvpMatrix = new Matrix4f().mul(projectionMatrix).mul(viewMatrix);
             GL20.glUseProgram(program);
@@ -119,7 +119,7 @@ public class MeshShadertest {
             GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 0, ssbo);
             checkGLError();
 
-            NVMeshShader.glDrawMeshTasksNV(0, 4096);
+            NVMeshShader.glDrawMeshTasksNV(0, 32768);
             checkGLError();
 
             GLFW.glfwSwapBuffers(window);

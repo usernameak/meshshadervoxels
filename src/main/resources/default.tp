@@ -7,7 +7,7 @@
 layout(local_size_x = 6) in;
 
 layout(std430, binding = 0) buffer inputBlockData {
-    uint block_types[16 * 16 * 16];
+    uint block_types[32 * 32 * 32];
 };
 
 // faces:
@@ -18,7 +18,7 @@ layout(std430, binding = 0) buffer inputBlockData {
 // 4 = WEST
 // 5 = EAST
 
-const int faceBlockArrayOffsets[] = {-16, 16, -256, 256, -1, 1};
+const int faceBlockArrayOffsets[] = {-32, 32, -1024, 1024, -1, 1};
 const ivec3 faceBlockArrayDirections[] = {
     ivec3(0, -1, 0),
     ivec3(0, 1, 0),
@@ -35,15 +35,14 @@ taskNV out Task {
 
 bool checkCullFace(int position, uint face) {
     int offset = faceBlockArrayOffsets[face];
-    int x = position % 16;
-    int y = (position / 16) % 16;
-    int z = position / 256;
+    int x = position % 32;
+    int y = (position / 32) % 32;
+    int z = position / 1024;
     ivec3 vpos = ivec3(x, y, z);
     ivec3 adjPos = vpos + faceBlockArrayDirections[face];
-    if(any(lessThan(adjPos, ivec3(0))) || any(greaterThanEqual(adjPos, ivec3(16)))) {
-        return true;
-    }
-    return block_types[offset + position] == 0;
+    return any(lessThan(adjPos, ivec3(0)))
+        || any(greaterThanEqual(adjPos, ivec3(16)))
+        || block_types[offset + position] == 0;
 }
 
 void main() {
